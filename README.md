@@ -32,7 +32,7 @@ The output is a ranked list of corridor nodes with two metrics:
 - **Exposure distance** — how many hops from the nearest exposed node
 - **Forward reach gain** — how many deeper nodes become reachable through this node
 
-No value labels. No heuristics. Graph position only.
+No asset-value labels. No human classification. Reach and graph position only.
 
 ---
 
