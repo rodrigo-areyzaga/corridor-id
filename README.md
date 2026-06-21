@@ -14,7 +14,9 @@ A low-value or no-data node can become important if it enables movement toward d
 
 ## The Promise
 
-Point the tool at a Docker Compose file. It discovers the topology. It identifies the corridor nodes. No human input beyond the file itself.
+Point the tool at a service topology. It identifies the corridor nodes. No human input beyond the topology file itself.
+
+Currently ships with a Docker Compose parser. The core topology model is format-agnostic and has been validated against hand-built topologies with no parser involved.
 
 ## How It Works
 
@@ -153,14 +155,15 @@ This result proves the tool is not merely counting networks. It is measuring whe
 
 ## Architecture
 
-Four files:
+Five files:
 
 - `corridor-id.py` — entry point, reads Compose file, prints results
 - `compose_parser.py` — Docker Compose parser, builds a Topology from YAML
 - `topology.py` — format-agnostic graph model (nodes, edges, networks, exposure)
 - `identifier.py` — corridor node identification logic (depth map, forward reach, ranking)
+- `test_manual_topology.py` — proves the core logic works without any parser
 
-The parser is a layer on top of the core logic. Today it reads Docker Compose. The topology model is format-agnostic — a Kubernetes or Terraform parser could produce the same Topology structure.
+The parser is a layer on top of the core logic. Today it reads Docker Compose. The topology model is format-agnostic — a Kubernetes or Terraform parser could produce the same Topology structure. `test_manual_topology.py` validates this claim by building a Topology by hand and running the identifier against it with no parser involved.
 
 ---
 
