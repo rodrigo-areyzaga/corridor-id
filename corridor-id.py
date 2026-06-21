@@ -45,6 +45,13 @@ def main():
     # Identify
     exposed_nodes, depth_map, corridor_nodes = identify_corridor_nodes(topo)
 
+    if not exposed_nodes:
+        print("No exposed services found.")
+        print("corridor-id requires at least one service with exposed ports")
+        print("to compute reach from an exposed surface.")
+        print()
+        return
+
     print(f"Exposed nodes: {', '.join(exposed_nodes)}")
     print()
 

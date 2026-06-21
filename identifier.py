@@ -6,7 +6,7 @@ Given a Topology, identify corridor nodes.
 A corridor node is a node that:
 1. Is not itself exposed
 2. Is reachable from an exposed node
-3. Expands reach FORWARD — toward equal or greater depth from the exposed surface
+3. Expands reach FORWARD — toward strictly greater depth from the exposed surface
 
 Backward reach (toward shallower nodes) is not corridor movement.
 No heuristics. No value labels. Graph position only.

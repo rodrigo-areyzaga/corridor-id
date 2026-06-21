@@ -25,7 +25,6 @@ The tool reads a Docker Compose file and builds a directed graph from:
 - Service definitions (nodes)
 - Network memberships (reachability)
 - Port mappings (exposure)
-- Environment variables (explicit dependencies)
 
 It then computes depth from the exposed surface using BFS and identifies nodes that expand forward reach — nodes that provide access to strictly deeper parts of the topology that the exposed surface cannot reach directly.
 
@@ -175,6 +174,22 @@ The parser is a layer on top of the core logic. Today it reads Docker Compose. T
 - It does not test whether corridor nodes have detection triggers
 - It does not reconstruct attack paths or perform forensic analysis
 - It does not require any human input beyond the Compose file
+
+---
+
+## Known Limitations
+
+**Multiple exposed surfaces share a global depth map.** The tool computes depth from all exposed nodes simultaneously. If two exposed services exist and one of them directly reaches a target, that target's depth is set globally — which can suppress corridor findings from the other exposed service's perspective.
+
+Example: if `public-a` reaches `target` only through `corridor-a`, but `public-b` reaches `target` directly, the tool may not flag `corridor-a` because `target` is already depth 1 globally.
+
+This means the current model answers: *which nodes expand reach from the combined exposed surface?* It does not yet answer: *which nodes expand reach from each exposed surface individually?*
+
+Per-exposed-surface analysis is planned for a future version.
+
+**Localhost-bound ports are treated as exposed.** The tool treats any service with a `ports` mapping as exposed, including `127.0.0.1`-bound ports. A localhost-bound service is reachable from the Docker host but not from external networks. The tool does not currently distinguish between `0.0.0.0:8080:80` (externally exposed) and `127.0.0.1:8080:80` (host-only). Both are treated as exposed surfaces. This is a reasonable default — an attacker on the host can reach localhost-bound services — but it may overstate exposure in environments where host access is not part of the threat model.
+
+**Compose profiles are not filtered.** Services declared under a `profiles` key may not run in the default deployment, but corridor-id includes them in the topology because they are part of the declared architecture. This can produce corridor findings for services that are defined but not active. The tool reads the Compose file as declared, not as deployed.
 
 ---
 

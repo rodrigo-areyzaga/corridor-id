@@ -6,8 +6,9 @@ Reads a docker-compose.yml and builds a Topology.
 Reachability rules:
 - Services on the same Docker network can reach each other.
 - A service with `ports` exposed is externally reachable (exposed=True).
-- Environment variables containing service hostnames indicate
-  explicit dependency (directional edge).
+
+No environment variable parsing. Reach is determined by network
+membership only. This avoids false edges from substring matching.
 """
 
 import yaml
@@ -21,7 +22,6 @@ def parse_compose(path):
         compose = yaml.safe_load(f)
 
     services = compose.get("services", {})
-    networks = compose.get("networks", {})
     topo = Topology()
 
     # Pass 1: register all nodes
@@ -30,20 +30,28 @@ def parse_compose(path):
         topo.add_node(name, exposed=exposed)
 
     # Pass 2: build network memberships
+    # Track which services have explicit network declarations
+    has_explicit_networks = set()
+
     for name, config in services.items():
         service_networks = config.get("networks", [])
         if isinstance(service_networks, dict):
             service_networks = list(service_networks.keys())
-        for net in service_networks:
-            if net not in topo.networks:
-                topo.networks[net] = set()
-            topo.networks[net].add(name)
-            topo.nodes[name]["networks"].add(net)
+        if service_networks:
+            has_explicit_networks.add(name)
+            for net in service_networks:
+                if net not in topo.networks:
+                    topo.networks[net] = set()
+                topo.networks[net].add(name)
+                topo.nodes[name]["networks"].add(net)
 
-    # If no explicit networks, all services share a default network
-    if not any(config.get("networks") for config in services.values()):
-        all_names = list(services.keys())
-        topo.add_network("default", all_names)
+    # Services without explicit networks join the default network
+    # This applies even when other services use custom networks
+    default_members = [
+        name for name in services if name not in has_explicit_networks
+    ]
+    if default_members:
+        topo.add_network("default", default_members)
 
     # Pass 3: build edges from shared networks
     for net_name, members in topo.networks.items():
@@ -51,27 +59,5 @@ def parse_compose(path):
             for other in members:
                 if member != other:
                     topo.add_edge(member, other)
-
-    # Pass 4: refine edges from environment variables
-    # Look for env vars that reference other service names
-    service_names = set(services.keys())
-    for name, config in services.items():
-        env = config.get("environment", [])
-        if isinstance(env, dict):
-            env_values = list(env.values())
-        elif isinstance(env, list):
-            env_values = []
-            for item in env:
-                if "=" in item:
-                    env_values.append(item.split("=", 1)[1])
-        else:
-            env_values = []
-
-        for val in env_values:
-            if not isinstance(val, str):
-                continue
-            for svc in service_names:
-                if svc != name and svc in val:
-                    topo.add_edge(name, svc)
 
     return topo
