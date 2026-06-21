@@ -1,0 +1,190 @@
+# corridor-id
+
+**Given a topology, identify which nodes are corridor nodes.**
+
+A corridor node is a node that expands forward reach from an exposed surface into deeper parts of the topology. It does not measure asset value. It measures reach expansion.
+
+---
+
+## The Premise
+
+A node's risk is not determined only by what it stores. It is determined by where it sits in the path.
+
+A low-value or no-data node can become important if it enables movement toward deeper, less-exposed parts of the environment.
+
+## The Promise
+
+Point the tool at a Docker Compose file. It discovers the topology. It identifies the corridor nodes. No human input beyond the file itself.
+
+## How It Works
+
+The tool reads a Docker Compose file and builds a directed graph from:
+
+- Service definitions (nodes)
+- Network memberships (reachability)
+- Port mappings (exposure)
+- Environment variables (explicit dependencies)
+
+It then computes depth from the exposed surface using BFS and identifies nodes that expand forward reach — nodes that provide access to strictly deeper parts of the topology that the exposed surface cannot reach directly.
+
+The output is a ranked list of corridor nodes with two metrics:
+
+- **Exposure distance** — how many hops from the nearest exposed node
+- **Forward reach gain** — how many deeper nodes become reachable through this node
+
+No value labels. No heuristics. Graph position only.
+
+---
+
+## Usage
+
+```bash
+python corridor-id.py <docker-compose.yml>
+```
+
+Requires Python 3 and PyYAML:
+
+```bash
+pip install pyyaml
+```
+
+---
+
+## Validation
+
+The tool has been tested against four architecturally different Docker Compose topologies. Two produce corridor nodes. Two correctly produce none.
+
+### corridor-lab — segmented topology with depth
+
+Our own lab, designed to demonstrate path-indexed triage mismatch. Five services across five segmented networks.
+
+```
+Exposed: public-web
+
+Corridor nodes found: 3
+
+  → status-api
+    Exposure distance: 1
+    Forward reach gain: 1
+
+  → log-monitor
+    Exposure distance: 1
+    Forward reach gain: 1
+
+  → internal-admin-api
+    Exposure distance: 2
+    Forward reach gain: 1
+```
+
+The tool independently identified `status-api` as a corridor node — the same finding the lab was built to prove.
+
+### OWASP crAPI — flat topology, no segmentation
+
+Ten services on one default network. No explicit network segmentation.
+
+```
+Exposed: crapi-web, mailhog
+
+Corridor nodes found: 0
+```
+
+Correct. Every service is directly reachable from the exposed surface in one hop. No node creates forward depth. No corridors exist because there are no walls.
+
+### Sock Shop — segmented multi-service topology
+
+Weaveworks microservices demo with production-reasonable network segmentation applied. Fifteen services across seven networks. The segmentation was applied for testing — it is not part of Sock Shop's original Compose file.
+
+```
+Exposed: edge-router
+
+Corridor nodes found: 6
+
+  → front-end
+    Exposure distance: 1
+    Forward reach gain: 6
+
+  → orders
+    Exposure distance: 2
+    Forward reach gain: 3
+
+  → shipping
+    Exposure distance: 2
+    Forward reach gain: 2
+
+  → carts
+    Exposure distance: 2
+    Forward reach gain: 1
+
+  → user
+    Exposure distance: 2
+    Forward reach gain: 1
+
+  → catalogue
+    Exposure distance: 2
+    Forward reach gain: 1
+```
+
+`front-end` ranks first — it bridges the edge tier into six application services. `orders` ranks second — it bridges the app tier into both the data tier and the queue tier. The tool found these findings without any human input about service function or data sensitivity.
+
+### Docker Example Voting App — segmented-looking but flat in practice
+
+Five services with two networks (`front-tier` and `back-tier`). Both exposed services sit on both networks.
+
+```
+Exposed: vote, result
+
+Corridor nodes found: 0
+```
+
+Correct. The segmentation does not create depth. Both exposed nodes bridge directly into the back tier. Every back-tier service is depth 1. No node expands forward reach because the exposed surface already touches everything.
+
+This result proves the tool is not merely counting networks. It is measuring whether segmentation creates forward depth from the exposed surface.
+
+### Summary
+
+| Target | Services | Networks | Depth | Corridor nodes | Why |
+|---|---|---|---|---|---|
+| corridor-lab | 5 | 5 | 3 | 3 | Real segmentation, real depth |
+| crAPI | 10 | 1 | 1 | 0 | Flat network, no depth |
+| Sock Shop | 15 | 7 | 3 | 6 | Segmented, real depth |
+| Voting App | 5 | 2 | 1 | 0 | Segmentation without depth |
+
+---
+
+## Architecture
+
+Four files:
+
+- `corridor-id.py` — entry point, reads Compose file, prints results
+- `compose_parser.py` — Docker Compose parser, builds a Topology from YAML
+- `topology.py` — format-agnostic graph model (nodes, edges, networks, exposure)
+- `identifier.py` — corridor node identification logic (depth map, forward reach, ranking)
+
+The parser is a layer on top of the core logic. Today it reads Docker Compose. The topology model is format-agnostic — a Kubernetes or Terraform parser could produce the same Topology structure.
+
+---
+
+## What This Tool Does Not Do
+
+- It does not assign value labels to services
+- It does not use heuristics to guess service function
+- It does not scan networks or probe running services
+- It does not test whether corridor nodes have detection triggers
+- It does not reconstruct attack paths or perform forensic analysis
+- It does not require any human input beyond the Compose file
+
+---
+
+## Relationship to corridor-lab
+
+[corridor-lab](https://github.com/rodrigo-areyzaga/corridor-lab) proves the premise: a service with no sensitive data can become high-priority because of where it sits in the path.
+
+corridor-id delivers the promise: given a topology, identify which nodes are corridor nodes — automatically, from graph position alone.
+
+corridor-lab is the proof. corridor-id is the tool.
+
+---
+
+## Development Note
+
+This project was developed with AI assistance. Claude and ChatGPT were used as pair-programming and review tools. The concept, security framing, testing direction, and final implementation decisions were human-directed.
