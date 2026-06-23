@@ -67,7 +67,7 @@ def identify_corridor_nodes(topo):
 
         node_depth = depth_map[node]
 
-        # Forward reach: nodes this node can reach at equal or greater depth
+        # Forward reach: nodes this node can reach at strictly greater depth
         forward_reach = []
         for target in topo.can_reach(node):
             if target in depth_map and depth_map[target] > node_depth and target != node:
