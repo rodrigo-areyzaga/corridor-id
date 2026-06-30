@@ -1,5 +1,5 @@
 """
-corridor-id v0.2 — topology model
+giltzarri v0.2 — topology model
 
 Format-agnostic representation of a service topology.
 Nodes are services. Edges are reachability (which service can reach which).

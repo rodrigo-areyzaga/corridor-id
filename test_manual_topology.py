@@ -2,7 +2,7 @@
 """
 test_manual_topology.py
 
-Proves that corridor-id's core logic works without any parser.
+Proves that giltzarri's core logic works without any parser.
 The Topology is built by hand — no Compose file, no YAML, no parser.
 
 If this produces correct results, the topology model is format-agnostic.

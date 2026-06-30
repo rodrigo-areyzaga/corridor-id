@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-corridor-id v0.2
+giltzarri v0.2
 
 Point it at a Docker Compose file.
 It discovers the topology.
 It identifies the corridor nodes.
 
 Usage:
-    python corridor-id.py <docker-compose.yml>
+    python giltzarri.py <docker-compose.yml>
 """
 
 import sys
@@ -17,11 +17,11 @@ from identifier import identify_corridor_nodes
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python corridor-id.py <docker-compose.yml>")
+        print("Usage: python giltzarri.py <docker-compose.yml>")
         sys.exit(1)
 
     path = sys.argv[1]
-    print("corridor-id v0.2")
+    print("giltzarri v0.2")
     print()
 
     # Parse
@@ -47,7 +47,7 @@ def main():
 
     if not exposed_nodes:
         print("No exposed services found.")
-        print("corridor-id requires at least one service with exposed ports")
+        print("giltzarri requires at least one service with exposed ports")
         print("to compute reach from an exposed surface.")
         print()
         return

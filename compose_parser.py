@@ -1,5 +1,5 @@
 """
-corridor-id v0.2 — Docker Compose parser
+giltzarri v0.2 — Docker Compose parser
 
 Reads a docker-compose.yml and builds a Topology.
 

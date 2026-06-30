@@ -1,5 +1,5 @@
 """
-corridor-id v0.2 — corridor node identifier
+giltzarri v0.2 — corridor node identifier
 
 Given a Topology, identify corridor nodes.
 

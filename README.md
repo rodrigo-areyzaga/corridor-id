@@ -1,4 +1,6 @@
-# corridor-id
+# giltzarri
+
+> **Note:** This project was renamed from `corridor-id` to `giltzarri` as part of the Haritzarri tool family. The GitHub repository redirects automatically from the old name. No functional changes � this is a naming-only update.
 
 **Given a topology, identify which nodes are corridor nodes.**
 
@@ -40,7 +42,7 @@ No asset-value labels. No human classification. Reach and graph position only.
 ## Usage
 
 ```bash
-python corridor-id.py <docker-compose.yml>
+python giltzarri.py <docker-compose.yml>
 ```
 
 Requires Python 3 and PyYAML:
@@ -156,7 +158,7 @@ This result proves the tool is not merely counting networks. It is measuring whe
 
 Five files:
 
-- `corridor-id.py` — entry point, reads Compose file, prints results
+- `giltzarri.py` — entry point, reads Compose file, prints results
 - `compose_parser.py` — Docker Compose parser, builds a Topology from YAML
 - `topology.py` — format-agnostic graph model (nodes, edges, networks, exposure)
 - `identifier.py` — corridor node identification logic (depth map, forward reach, ranking)
@@ -189,7 +191,7 @@ Per-exposed-surface analysis is planned for a future version.
 
 **Localhost-bound ports are treated as exposed.** The tool treats any service with a `ports` mapping as exposed, including `127.0.0.1`-bound ports. A localhost-bound service is reachable from the Docker host but not from external networks. The tool does not currently distinguish between `0.0.0.0:8080:80` (externally exposed) and `127.0.0.1:8080:80` (host-only). Both are treated as exposed surfaces. This is a reasonable default — an attacker on the host can reach localhost-bound services — but it may overstate exposure in environments where host access is not part of the threat model.
 
-**Compose profiles are not filtered.** Services declared under a `profiles` key may not run in the default deployment, but corridor-id includes them in the topology because they are part of the declared architecture. This can produce corridor findings for services that are defined but not active. The tool reads the Compose file as declared, not as deployed.
+**Compose profiles are not filtered.** Services declared under a `profiles` key may not run in the default deployment, but giltzarri includes them in the topology because they are part of the declared architecture. This can produce corridor findings for services that are defined but not active. The tool reads the Compose file as declared, not as deployed.
 
 ---
 
@@ -197,9 +199,9 @@ Per-exposed-surface analysis is planned for a future version.
 
 [corridor-lab](https://github.com/rodrigo-areyzaga/corridor-lab) proves the premise: a service with no sensitive data can become high-priority because of where it sits in the path.
 
-corridor-id delivers the promise: given a topology, identify which nodes are corridor nodes — automatically, from graph position alone.
+giltzarri delivers the promise: given a topology, identify which nodes are corridor nodes — automatically, from graph position alone.
 
-corridor-lab is the proof. corridor-id is the tool.
+corridor-lab is the proof. giltzarri is the tool.
 
 ---
 
